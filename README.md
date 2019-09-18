@@ -2,7 +2,7 @@
 
 ## About
 
-Simple arduino project for the control of smart roof prototypes through the use of light sensors, humidity and temperature sensors, as well as manual control through MQTT IoT Protocol. The code for the accompanying App can be found [here](https://github.com/SOA4ID/auto_roof-react_native).
+Simple arduino project for the control of smart roof prototypes through the use of light sensors, humidity and temperature sensors, as well as manual control through MQTT IoT Protocol. The code for the accompanying App can be found [here](https://github.com/SOA4ID/Roofer-App).
 
 
 ## Requirements
