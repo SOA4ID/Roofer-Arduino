@@ -6,12 +6,12 @@
 #include "DHT.h"
 
 // WiFi credentials
-const char* ssid = "OnePlus";
-const char* password = "KTVR1810";
+const char* ssid = "yourSSID"; // SSID for the WiFi connection
+const char* password = "yourPassword"; // Password for the WiFi connection
 
 // MQTT broker
 const char* mqtt_server = "soldier.cloudmqtt.com"; //soldier.cloudmqtt.com
-const int mqtt_port = 14292;
+const int mqtt_port = myport; // Port
 
 // MQTT Credentials
 const char* mqtt_user = "myusername"; // Change for your username
