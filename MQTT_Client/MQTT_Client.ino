@@ -6,16 +6,16 @@
 #include "DHT.h"
 
 // WiFi credentials
-const char* ssid = "your_ssid";
-const char* password = "your_ssid_password";
+const char* ssid = "OnePlus";
+const char* password = "KTVR1810";
 
 // MQTT broker
-const char* mqtt_server = "myaddress.mybroker.com";
-const int mqtt_port = myPort;
+const char* mqtt_server = "soldier.cloudmqtt.com"; //soldier.cloudmqtt.com
+const int mqtt_port = 14292;
 
 // MQTT Credentials
-const char* mqtt_user = "myusername";
-const char* mqtt_password = "mypass";
+const char* mqtt_user = "myusername"; // Change for your username
+const char* mqtt_password = "mypassword"; // Change for your password
 
 // WiFi and MQTT client instantiation
 WiFiClient espClient;
@@ -74,6 +74,7 @@ void setup_wifi() {
   Serial.println(ssid);
 
   // Establishes WiFi Connectivity
+  WiFi.setSleepMode(WIFI_NONE_SLEEP);
   WiFi.begin(ssid, password);
 
   while (WiFi.status() != WL_CONNECTED) {
@@ -110,12 +111,12 @@ void callback(char* topic, byte* payload, unsigned int length) {
       deployer_auto = false;
     }
 
-    if ((char)payload[1] == '1') {
+    if ((char)payload[1] == '0') {
       Serial.println("Descender Automatic Mode : ON");
       descender_auto = true;
     }
 
-    if ((char)payload[1] == '0') {
+    if ((char)payload[1] == '1') {
       Serial.println("Descender Automatic Mode : OFF");
       descender_auto = false;
     }
@@ -125,13 +126,19 @@ void callback(char* topic, byte* payload, unsigned int length) {
      if ((char)payload[0] == '1' && deployer_auto == false) {
       Serial.println("ACTIVATING DEPLOYER ROOF");
       if (isDeployerOut == true) {
-        isDeployerOut = false;
         left_roof_control(true);
+        Serial.println("going in");
+        isDeployerOut = false;
+        return;
+        
       }
 
       if (isDeployerOut == false) {
-        isDeployerOut = true;
         left_roof_control(false);
+        Serial.println("Going out");
+        isDeployerOut = true;
+        return;
+        
       }
     }
 
@@ -139,12 +146,18 @@ void callback(char* topic, byte* payload, unsigned int length) {
       Serial.println("ACTIVATING DESCENDER ROOF");
       if (isDescenderDown == true) {
         isDescenderDown = false;
+        Serial.println("going in");
         right_roof_control(true);
+        return;
+        
       }
 
       if (isDescenderDown == false) {
         isDescenderDown = true;
+        Serial.println("Going out");
         right_roof_control(false);
+        return;
+        
       }
     } 
   }  
@@ -154,24 +167,26 @@ void reconnect() {
   // Loop until we're reconnected
   while (!client.connected()) {
     Serial.print("Attempting MQTT connection...");
-    if (client.connect("MyclientID",mqtt_user,mqtt_password)) {
+    int randNumber = random(3000);
+    char cli[16];
+    sprintf(cli, "%05d", randNumber);
+    
+    if (client.connect(cli ,mqtt_user,mqtt_password)) {
       Serial.println("connected");
       float h = dht.readHumidity();
       float t = dht.readTemperature();
       int tmp = static_cast<int>(t);
       int humidity = static_cast<int>(h);
       int light = (analogRead(LightSensor_Pin)*100)/1023;
-      char tmsg[16];
-      char lmsg[16];
-      char hmsg[16];
-      
-      sprintf(tmsg, "%05d", tmp);
-      sprintf(lmsg, "%05d", light);
-      sprintf(hmsg, "%05d", humidity);
-    
-      client.publish(temperature_value, tmsg);
-      client.publish(light_value, lmsg);
-      client.publish(humidity_value, hmsg);
+      Serial.print("[Temperature] =>");
+      Serial.println(tmp);
+      Serial.print("[Light] =>");
+      Serial.println(light);
+      Serial.print("[Humidity] =>");
+      Serial.println(humidity);
+      client.publish(temperature_value, String(tmp).c_str());
+      client.publish(light_value, String(light).c_str());
+      client.publish(humidity_value, String(humidity).c_str());
 
       client.subscribe(modes);
       client.subscribe(actions);
@@ -220,9 +235,10 @@ void loop() {
   // Listens to the server and validates de new messages if any
   client.loop();
 
-    // Deployer auto mode controls
+  long now = millis();
+  if (now - lastMsg > 5000) {
+        // Deployer auto mode controls
     if (deployer_auto == true) {
-      
       // If the light levels are high and the roof is not deployed, it deploys it
       if (analogRead(LightSensor_Pin) > 900 && isDeployerOut == false)
       {
@@ -256,9 +272,7 @@ void loop() {
         right_roof_control(false);
       }
     }
-
-  long now = millis();
-  if (now - lastMsg > 5000) {
+    Serial.println("Sending data");
     lastMsg = now;
     ++value;
     float h = dht.readHumidity();
@@ -266,16 +280,16 @@ void loop() {
     int tmp = static_cast<int>(t);
     int humidity = static_cast<int>(h);
     int light = (analogRead(LightSensor_Pin)*100)/1023;
-    char tmsg[16];
-    char lmsg[16];
-    char hmsg[16];
-    sprintf(tmsg, "%05d", tmp);
-    sprintf(lmsg, "%05d", light);
-    sprintf(hmsg, "%05d", humidity);
+    Serial.print("[Temperature] =>");
+    Serial.println(tmp);
+    Serial.print("[Light] =>");
+    Serial.println(light);
+    Serial.print("[Humidity] =>");
+    Serial.println(humidity);
     
-    client.publish(temperature_value, tmsg);
-    client.publish(light_value, lmsg);
-    client.publish(humidity_value, hmsg);
+    client.publish(temperature_value, String(tmp).c_str());
+    client.publish(light_value, String(light).c_str());
+    client.publish(humidity_value, String(humidity).c_str());
   }
 }
 
@@ -291,7 +305,7 @@ void left_roof_control(bool direc) {
 // Full descender action
 void right_roof_control(bool direc) {
 
-  for (int i = 0; i < 8000; i++) {
+  for (int i = 0; i < 16000; i++) {
         step2(direc);
     }
   
